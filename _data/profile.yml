@@ -8,7 +8,7 @@ availability: ""                # e.g. "Open to new opportunities"
 email: linxin.works@gmail.com
 github: https://github.com/calipao
 linkedin: https://www.linkedin.com/in/lin-xin-work/
-website: https://linxin.dev
+# website: https://example.com  # optional personal site link
 resume: ""                      # e.g. /assets/resume.pdf once the PDF is added
 
 skills:

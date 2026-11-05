@@ -1,0 +1,14 @@
+{%- assign proj = include.project -%}
+<article class="project-card">
+  {%- if proj.image %}
+  <a href="{{ proj.url | relative_url }}" tabindex="-1" aria-hidden="true">
+    <img src="{{ proj.image | relative_url }}" alt="" loading="lazy">
+  </a>
+  {%- endif %}
+  <h3><a href="{{ proj.url | relative_url }}">{{ proj.title }}</a></h3>
+  {%- if proj.summary %}<p>{{ proj.summary }}</p>{% endif %}
+  {%- if proj.tags and proj.tags.size > 0 %}
+  <ul class="tags">{% for tag in proj.tags %}<li>{{ tag }}</li>{% endfor %}</ul>
+  {%- endif %}
+  {% include project-links.html project=proj %}
+</article>

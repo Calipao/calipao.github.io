@@ -1,0 +1,19 @@
+# Edit this file to update your details everywhere on the site.
+# Leave a value empty ("") to hide that link.
+name: Lin Xin
+role: "[Your title, e.g. Software Engineer / CS Student]"
+tagline: "[One sentence about what you build and what you care about.]"
+availability: "[Open to internships / full-time roles / freelance work]"
+
+email: ""                       # e.g. you@example.com
+github: https://github.com/calipao
+linkedin: ""                    # e.g. https://www.linkedin.com/in/your-handle
+resume: ""                      # e.g. /assets/resume.pdf once the PDF is added
+
+skills:
+  - group: Languages
+    items: ["[Python]", "[JavaScript]", "[Java]"]
+  - group: Frameworks
+    items: ["[React]", "[Flask]"]
+  - group: Tools
+    items: ["[Git]", "[Docker]", "[Linux]"]

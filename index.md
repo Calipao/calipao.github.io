@@ -33,6 +33,6 @@ title: Home
 
 ## Get in touch
 
-{{ p.availability }} The quickest way to reach me is through the links below.
+{% if p.availability != "" %}{{ p.availability }} {% endif %}The quickest way to reach me is through the links below.
 
 {% include contact-links.html %}

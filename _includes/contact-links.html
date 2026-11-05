@@ -3,5 +3,6 @@
   {%- if p.email and p.email != "" %}<li><a href="mailto:{{ p.email }}">email</a></li>{% endif %}
   {%- if p.github and p.github != "" %}<li><a href="{{ p.github }}">github</a></li>{% endif %}
   {%- if p.linkedin and p.linkedin != "" %}<li><a href="{{ p.linkedin }}">linkedin</a></li>{% endif %}
+  {%- if p.website and p.website != "" %}<li><a href="{{ p.website }}">{{ p.website | remove: "https://" }}</a></li>{% endif %}
   {%- if p.resume and p.resume != "" %}<li><a href="{{ p.resume | relative_url }}">résumé</a></li>{% endif %}
 </ul>

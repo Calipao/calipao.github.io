@@ -1,19 +1,20 @@
 # Edit this file to update your details everywhere on the site.
-# Leave a value empty ("") to hide that link.
+# Leave a value empty ("") to hide that line or link.
 name: Lin Xin
-role: "[Your title, e.g. Software Engineer / CS Student]"
-tagline: "[One sentence about what you build and what you care about.]"
-availability: "[Open to internships / full-time roles / freelance work]"
+role: Software Engineer | Game Developer
+tagline: Passionate software and game developer based in Singapore.
+availability: ""                # e.g. "Open to new opportunities"
 
-email: ""                       # e.g. you@example.com
+email: linxin.works@gmail.com
 github: https://github.com/calipao
 linkedin: https://www.linkedin.com/in/lin-xin-work/
+website: https://linxin.dev
 resume: ""                      # e.g. /assets/resume.pdf once the PDF is added
 
 skills:
-  - group: Languages
-    items: ["[Python]", "[JavaScript]", "[Java]"]
-  - group: Frameworks
-    items: ["[React]", "[Flask]"]
-  - group: Tools
-    items: ["[Git]", "[Docker]", "[Linux]"]
+  - group: Game development
+    items: ["Godot", "Game Engine Development"]
+  - group: Other
+    items: ["Logistics Management"]
+  - group: Spoken languages
+    items: ["English (professional working)", "Mandarin (professional working)"]

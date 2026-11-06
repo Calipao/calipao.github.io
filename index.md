@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: desk
 title: Home
 ---
 {%- assign p = site.data.profile -%}

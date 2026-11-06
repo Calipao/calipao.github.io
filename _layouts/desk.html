@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: "en-US" }}" data-view="text">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+      // Pick the starting view before anything paints: the 3D desk, unless the
+      // visitor prefers reduced motion, has no WebGL, or chose the text view.
+      (function () {
+        var view = "3d";
+        try {
+          var saved = localStorage.getItem("desk-view");
+          if (saved === "text" || saved === "3d") view = saved;
+          else if (matchMedia("(prefers-reduced-motion: reduce)").matches) view = "text";
+        } catch (e) {}
+        var webgl = false;
+        try {
+          var c = document.createElement("canvas");
+          webgl = !!(c.getContext("webgl2") || c.getContext("webgl"));
+        } catch (e) {}
+        if (!webgl) view = "text";
+        document.documentElement.setAttribute("data-webgl", webgl ? "yes" : "no");
+        document.documentElement.setAttribute("data-view", view);
+      })();
+    </script>
+    <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+    {% include head-custom.html %}
+{% seo %}
+  </head>
+
+  <body class="desk-page">
+    <a class="skip-link" href="#main_content" data-view-switch="text">Skip to text version</a>
+
+    <div id="desk-app"
+         data-portfolio="{{ '/assets/data/portfolio.json' | relative_url }}"
+         data-home="{{ '/' | relative_url }}">
+      <canvas id="desk-canvas" aria-hidden="true"></canvas>
+
+      <div class="desk-hud">
+        <div class="desk-id">
+          <p class="desk-name">./ {{ site.data.profile.name }}</p>
+          <p class="desk-role">{{ site.data.profile.role }}</p>
+        </div>
+        <nav class="site-nav" aria-label="Main">
+          <a href="{{ '/projects/' | relative_url }}">projects</a>
+          <a href="{{ '/about/' | relative_url }}">about</a>
+          <button type="button" class="link-button" data-view-switch="text">text view</button>
+        </nav>
+      </div>
+
+      <p id="desk-hint" class="desk-hint">Drag to look around · Click the monitor to use the terminal · Click a cartridge to open a project</p>
+
+      <div id="desk-term-ui" class="desk-term-ui" hidden>
+        <div class="desk-chips" role="group" aria-label="Terminal commands">
+          <button type="button" data-cmd="help">help</button>
+          <button type="button" data-cmd="projects">projects</button>
+          <button type="button" data-cmd="about">about</button>
+          <button type="button" data-cmd="experience">experience</button>
+          <button type="button" data-cmd="contact">contact</button>
+        </div>
+        <button type="button" id="desk-term-exit" class="desk-exit">exit terminal [esc]</button>
+      </div>
+
+      <div id="desk-tooltip" class="desk-tooltip" hidden></div>
+      <div id="desk-loading" class="desk-loading" role="status">booting desk…</div>
+      <div id="desk-live" class="sr-only" aria-live="polite"></div>
+      <input id="desk-term-input" class="desk-term-input" type="text" autocomplete="off"
+             autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send"
+             aria-label="Terminal input" tabindex="-1">
+    </div>
+
+    <div id="text-view">
+      <header>
+        <div class="container">
+          <a id="a-title" href="{{ '/' | relative_url }}">
+            <h1>{{ site.data.profile.name | default: site.title }}</h1>
+          </a>
+          <h2>{{ site.data.profile.role | default: site.description }}</h2>
+          {% include nav.html %}
+          <p class="enter-3d"><button type="button" class="link-button" data-view-switch="3d">&#9654; enter the 3D desk</button></p>
+        </div>
+      </header>
+
+      <div class="container">
+        <section id="main_content" tabindex="-1">
+          {{ content }}
+        </section>
+      </div>
+
+      {% include footer.html %}
+    </div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "{{ '/assets/vendor/three/three.module.js' | relative_url }}",
+          "three/addons/": "{{ '/assets/vendor/three/addons/' | relative_url }}"
+        }
+      }
+    </script>
+    <script type="module" src="{{ '/assets/js/desk/main.js' | relative_url }}"></script>
+  </body>
+</html>

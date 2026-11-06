@@ -1,0 +1,8 @@
+{%- assign proj = include.project -%}
+{%- if proj.repo or proj.demo or proj.writeup -%}
+<p class="project-links">
+  {%- if proj.repo %}<a href="{{ proj.repo }}">code</a>{% endif %}
+  {%- if proj.demo %}<a href="{{ proj.demo }}">live demo</a>{% endif %}
+  {%- if proj.writeup %}<a href="{{ proj.writeup }}">write-up</a>{% endif %}
+</p>
+{%- endif -%}

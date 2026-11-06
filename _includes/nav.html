@@ -1,0 +1,9 @@
+{%- assign p = site.data.profile -%}
+<nav class="site-nav" aria-label="Main">
+  <a href="{{ '/' | relative_url }}"{% if page.url == '/' %} aria-current="page"{% endif %}>home</a>
+  <a href="{{ '/projects/' | relative_url }}"{% if page.url contains '/projects/' %} aria-current="page"{% endif %}>projects</a>
+  <a href="{{ '/about/' | relative_url }}"{% if page.url == '/about/' %} aria-current="page"{% endif %}>about</a>
+  {%- if p.resume and p.resume != "" %}
+  <a href="{{ p.resume | relative_url }}">résumé</a>
+  {%- endif %}
+</nav>

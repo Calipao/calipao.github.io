@@ -321,34 +321,53 @@ export function buildDesk(scene, { data, screenTexture }) {
   });
 
   // ---------- lamp ----------
+  // Built from points so the arm joints meet and the shade, bulb and light all
+  // aim at the same spot on the desk.
   const lamp = new THREE.Group();
   const lampMat = mat("#2f3b35", { metalness: 0.5, roughness: 0.35 });
+  const lampPos = new THREE.Vector3(0.7, DESK_Y, -0.22);
+  const aimAt = new THREE.Vector3(0.3, DESK_Y, 0.12); // world point the lamp lights
+  const elbow = new THREE.Vector3(0, 0.4, -0.04);      // lamp-local points
+  const headPos = new THREE.Vector3(-0.22, 0.47, 0.02);
+  const aimLocal = aimAt.clone().sub(lampPos);
+  const aimDir = aimLocal.clone().sub(headPos).normalize();
+
+  function rod(from, to, radius) {
+    const dir = to.clone().sub(from);
+    const r = mesh(new THREE.CylinderGeometry(radius, radius, dir.length(), 8), lampMat);
+    r.position.copy(from).add(to).multiplyScalar(0.5);
+    r.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+    lamp.add(r);
+  }
+
   const lampBase = mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.02, 20), lampMat);
   lampBase.position.y = 0.01;
   lamp.add(lampBase);
-  const arm1 = mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.36, 8), lampMat);
-  arm1.position.set(0, 0.19, -0.03);
-  arm1.rotation.x = -0.25;
-  lamp.add(arm1);
-  const joint = mesh(new THREE.SphereGeometry(0.016, 12, 8), lampMat);
-  joint.position.set(0, 0.36, -0.075);
-  lamp.add(joint);
-  const arm2 = mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.3, 8), lampMat);
-  arm2.position.set(-0.11, 0.42, -0.04);
-  arm2.rotation.z = Math.PI / 2.6;
-  lamp.add(arm2);
-  const head = mesh(new THREE.ConeGeometry(0.06, 0.1, 20, 1, true), new THREE.MeshStandardMaterial({ color: "#2f3b35", metalness: 0.5, roughness: 0.35, side: THREE.DoubleSide }));
-  head.position.set(-0.24, 0.43, -0.01);
-  head.rotation.z = 0.5;
-  lamp.add(head);
-  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.022, 12, 8), new THREE.MeshBasicMaterial({ color: "#fff3c4" }));
-  bulb.position.set(-0.225, 0.4, -0.01);
+  rod(new THREE.Vector3(0, 0.02, 0), elbow, 0.008);
+  rod(elbow, headPos, 0.008);
+  for (const p of [elbow, headPos]) {
+    const joint = mesh(new THREE.SphereGeometry(0.014, 12, 8), lampMat);
+    joint.position.copy(p);
+    lamp.add(joint);
+  }
+  // Shade: an open cone whose wide end faces the aim point.
+  const shade = mesh(
+    new THREE.ConeGeometry(0.06, 0.1, 20, 1, true),
+    new THREE.MeshStandardMaterial({ color: "#2f3b35", metalness: 0.5, roughness: 0.35, side: THREE.DoubleSide })
+  );
+  shade.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), aimDir.clone().negate());
+  shade.position.copy(headPos).addScaledVector(aimDir, 0.045);
+  lamp.add(shade);
+  const bulbPos = headPos.clone().addScaledVector(aimDir, 0.07);
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.02, 12, 8), new THREE.MeshBasicMaterial({ color: "#fff3c4" }));
+  bulb.position.copy(bulbPos);
   lamp.add(bulb);
-  lamp.position.set(0.7, DESK_Y, -0.22);
+  lamp.position.copy(lampPos);
   scene.add(lamp);
+
   const lampLight = new THREE.SpotLight("#ffd9a0", 6, 3, 0.75, 0.6, 1.5);
-  lampLight.position.set(0.7 - 0.225, DESK_Y + 0.39, -0.23);
-  lampLight.target.position.set(0.25, DESK_Y, 0.05);
+  lampLight.position.copy(lampPos).add(bulbPos);
+  lampLight.target.position.copy(aimAt);
   lampLight.castShadow = true;
   lampLight.shadow.mapSize.set(1024, 1024);
   lampLight.shadow.bias = -0.0005;

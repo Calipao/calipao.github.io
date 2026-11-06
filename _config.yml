@@ -21,6 +21,7 @@ plugins:
   - jekyll-sitemap
 
 exclude:
+  - godot
   - OUTLINE.md
   - README.md
   - Gemfile

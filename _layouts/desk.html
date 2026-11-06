@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: "en-US" }}" data-view="text">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+      // Pick the starting view before anything paints: the 3D desk, unless the
+      // visitor prefers reduced motion, lacks WebGL 2 (Godot needs it), or chose text.
+      (function () {
+        var view = "3d";
+        try {
+          var saved = localStorage.getItem("desk-view");
+          if (saved === "text" || saved === "3d") view = saved;
+          else if (matchMedia("(prefers-reduced-motion: reduce)").matches) view = "text";
+        } catch (e) {}
+        var webgl = false;
+        try { webgl = !!document.createElement("canvas").getContext("webgl2"); } catch (e) {}
+        if (!webgl) view = "text";
+        document.documentElement.setAttribute("data-webgl", webgl ? "yes" : "no");
+        document.documentElement.setAttribute("data-view", view);
+      })();
+    </script>
+    <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+    {% include head-custom.html %}
+{% seo %}
+  </head>
+
+  <body class="desk-page">
+    <a class="skip-link" href="#main_content" data-view-switch="text">Skip to text version</a>
+
+    <div id="desk-app">
+      <iframe id="desk-frame" title="Interactive 3D desk with a terminal (Godot)"
+              data-src="{{ '/assets/godot/index.html' | relative_url }}" allow="fullscreen"></iframe>
+      <div class="desk-hud">
+        <div class="desk-id">
+          <p class="desk-name">./ {{ site.data.profile.name }}</p>
+          <p class="desk-role">{{ site.data.profile.role }}</p>
+        </div>
+        <nav class="site-nav" aria-label="Main">
+          <a href="{{ '/projects/' | relative_url }}">projects</a>
+          <a href="{{ '/about/' | relative_url }}">about</a>
+          <button type="button" class="link-button" data-view-switch="text">text view</button>
+        </nav>
+      </div>
+    </div>
+
+    <div id="text-view">
+      <header>
+        <div class="container">
+          <a id="a-title" href="{{ '/' | relative_url }}">
+            <h1>{{ site.data.profile.name | default: site.title }}</h1>
+          </a>
+          <h2>{{ site.data.profile.role | default: site.description }}</h2>
+          {% include nav.html %}
+          <p class="enter-3d"><button type="button" class="link-button" data-view-switch="3d">&#9654; enter the 3D desk</button></p>
+        </div>
+      </header>
+
+      <div class="container">
+        <section id="main_content" tabindex="-1">
+          {{ content }}
+        </section>
+      </div>
+
+      {% include footer.html %}
+    </div>
+
+    <script>
+      // Data for the Godot desk, read through JavaScriptBridge (window.parent.DESK_DATA).
+      window.DESK_DATA = {% include portfolio.json %};
+
+      (function () {
+        var root = document.documentElement;
+        var frame = document.getElementById("desk-frame");
+
+        // Called from Godot to follow a link on the main page.
+        window.deskNavigate = function (href) {
+          if (/^mailto:/i.test(href)) { window.location.href = href; return; }
+          var url = new URL(href, window.location.href);
+          if (url.origin !== window.location.origin) window.open(url.href, "_blank", "noopener");
+          else window.location.href = url.href;
+        };
+
+        // Load the Godot export only while the 3D view is showing.
+        function loadFrame() {
+          if (frame.getAttribute("src")) return;
+          var src = frame.getAttribute("data-src");
+          fetch(src, { method: "HEAD" }).then(function (res) {
+            if (!res.ok) throw new Error("Godot export not found (" + res.status + ")");
+            frame.setAttribute("src", src);
+            frame.addEventListener("load", function () { try { frame.focus(); } catch (e) {} }, { once: true });
+          }).catch(function (err) {
+            console.warn("3D desk unavailable:", err);
+            root.setAttribute("data-webgl", "no");
+            window.deskSetView("text", false);
+          });
+        }
+
+        window.deskSetView = function (view, remember) {
+          root.setAttribute("data-view", view);
+          if (remember !== false) { try { localStorage.setItem("desk-view", view); } catch (e) {} }
+          if (view === "3d") loadFrame();
+          else frame.removeAttribute("src");
+        };
+
+        document.addEventListener("click", function (e) {
+          var sw = e.target.closest("[data-view-switch]");
+          if (!sw) return;
+          var view = sw.getAttribute("data-view-switch");
+          if (sw.tagName !== "A") e.preventDefault();
+          window.deskSetView(view);
+          if (view === "text") {
+            window.scrollTo(0, 0);
+            document.getElementById("main_content").focus({ preventScroll: true });
+          }
+        });
+
+        if (root.getAttribute("data-view") === "3d") loadFrame();
+      })();
+    </script>
+  </body>
+</html>

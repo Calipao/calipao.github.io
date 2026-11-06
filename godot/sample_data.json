@@ -1,0 +1,157 @@
+{
+    "name": "Lin Xin",
+    "role": "Software Engineer | Game Developer",
+    "tagline": "Passionate software and game developer based in Singapore.",
+    "availability": "",
+    "links": {
+        "email": "linxin.works@gmail.com",
+        "github": "https://github.com/calipao",
+        "linkedin": "https://www.linkedin.com/in/lin-xin-work/",
+        "website": null,
+        "resume": null
+    },
+    "pages": {
+        "home": "/",
+        "about": "/about/",
+        "projects": "/projects/"
+    },
+    "skills": [
+        {
+            "group": "Game development",
+            "items": [
+                "Godot",
+                "Game Engine Development"
+            ]
+        },
+        {
+            "group": "Other",
+            "items": [
+                "Logistics Management"
+            ]
+        },
+        {
+            "group": "Spoken languages",
+            "items": [
+                "English (professional working)",
+                "Mandarin (professional working)"
+            ]
+        }
+    ],
+    "experience": [
+        {
+            "role": "Programmer",
+            "org": "KOEI TECMO Singapore",
+            "start": "April 2025",
+            "end": "Present",
+            "location": "Singapore",
+            "points": []
+        },
+        {
+            "role": "Intern Programmer",
+            "org": "KOEI TECMO Singapore",
+            "start": "September 2024",
+            "end": "April 2025",
+            "location": "Singapore",
+            "points": []
+        },
+        {
+            "role": "Technical Director",
+            "org": "Gearbyte Games",
+            "start": "May 2024",
+            "end": "Present",
+            "location": "Singapore",
+            "points": []
+        },
+        {
+            "role": "Teaching Assistant",
+            "org": "DigiPen Institute of Technology Singapore",
+            "start": "September 2022",
+            "end": "April 2023",
+            "location": "Singapore",
+            "points": [
+                "Provided guidance and support on a variety of programming concepts and assignments.",
+                "Graded assignments and gave feedback to students."
+            ]
+        },
+        {
+            "role": "Software Developer",
+            "org": "Echol",
+            "start": "March 2019",
+            "end": "July 2019",
+            "location": "Singapore",
+            "points": [
+                "Contributed to the development of proprietary business support software.",
+                "Deployed software for internal use."
+            ]
+        },
+        {
+            "role": "Web Developer",
+            "org": "Spot Works",
+            "start": "September 2018",
+            "end": "November 2018",
+            "location": "Singapore",
+            "points": [
+                "Developed and maintained the company's websites.",
+                "Worked on a team to refurbish old webpages."
+            ]
+        }
+    ],
+    "education": [
+        {
+            "qualification": "BS, Real-Time Interactive Simulation",
+            "school": "DigiPen Institute of Technology Singapore",
+            "start": "September 2021",
+            "end": "May 2025"
+        },
+        {
+            "qualification": "Real-Time Interactive Simulation",
+            "school": "DigiPen Institute of Technology",
+            "start": "April 2023",
+            "end": "August 2023"
+        },
+        {
+            "qualification": "Diploma, Game Design and Technology",
+            "school": "Nanyang Polytechnic",
+            "start": "2016",
+            "end": "2019"
+        }
+    ],
+    "projects": [
+        {
+            "title": "[Project 1]",
+            "summary": "[One or two sentences: what it is and the problem it solves.]",
+            "tags": [
+                "[Tech A]",
+                "[Tech B]"
+            ],
+            "url": "/projects/project-1/",
+            "repo": null,
+            "demo": null,
+            "featured": true
+        },
+        {
+            "title": "[Project 2]",
+            "summary": "[One or two sentences: what it is and the problem it solves.]",
+            "tags": [
+                "[Tech A]",
+                "[Tech B]"
+            ],
+            "url": "/projects/project-2/",
+            "repo": null,
+            "demo": null,
+            "featured": true
+        },
+        {
+            "title": "[Project 3]",
+            "summary": "[One or two sentences: what it is and the problem it solves.]",
+            "tags": [
+                "[Tech A]",
+                "[Tech B]"
+            ],
+            "url": "/projects/project-3/",
+            "repo": null,
+            "demo": null,
+            "featured": true
+        }
+    ]
+}

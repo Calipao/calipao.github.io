@@ -103,3 +103,72 @@ ul.tags li { list-style: none; }
 }
 
 img { max-width: 100%; height: auto; }
+
+/* ---------- Utilities ---------- */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  z-index: 100;
+  background: #000;
+  color: $accent;
+  padding: 8px 12px;
+}
+.skip-link:focus { left: 8px; }
+.link-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.site-nav .link-button { color: $muted; }
+.site-nav .link-button::before { content: "./"; color: #555; }
+.site-nav .link-button:hover { color: $accent; }
+
+/* ---------- 3D desk (home page, Godot build) ---------- */
+#desk-app { display: none; }
+[data-view="3d"] #desk-app { display: block; }
+[data-view="3d"] #text-view { display: none; }
+[data-view="3d"] body { overflow: hidden; }
+[data-webgl="no"] .enter-3d { display: none; }
+
+.enter-3d { margin: 10px 0 0; }
+.enter-3d .link-button { color: $accent; }
+.enter-3d .link-button:hover { text-decoration: underline; }
+
+#desk-frame {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  border: 0;
+  display: block;
+  background: #0c0f0e;
+}
+
+.desk-hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 14px 20px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  pointer-events: none;
+  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
+}
+.desk-hud > * { pointer-events: auto; }
+.desk-hud .site-nav { margin: 4px 0 0; }
+.desk-name {
+  margin: 0;
+  font-size: 1.35em;
+  font-weight: bold;
+  color: $accent;
+}
+.desk-role { margin: 0; color: $muted; font-size: 0.9em; }

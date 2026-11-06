@@ -1,0 +1,93 @@
+# Exports the Godot desk for the web, builds the Jekyll site around it and
+# publishes it to GitHub Pages.
+#
+# To go live: Settings > Pages > Build and deployment > Source: "GitHub Actions".
+# Runs on other branches build the site and attach it as a downloadable
+# "site-preview" artifact without deploying.
+name: Build and deploy site
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: "4.7.2"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-web
+
+      - name: Download Godot and the web export templates
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          templates="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p ~/godot "$templates"
+          curl -fsSL -o /tmp/godot.zip "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot
+          mv ~/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot/godot
+          curl -fsSL -o /tmp/templates.tpz "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          unzip -q /tmp/templates.tpz 'templates/web_nothreads_*' -d /tmp/tpl
+          mv /tmp/tpl/templates/* "$templates/"
+          ls -la "$templates"
+
+      - name: Export the Godot desk
+        run: |
+          set -euo pipefail
+          mkdir -p assets/godot
+          ~/godot/godot --headless --path godot --import
+          ~/godot/godot --headless --path godot --export-release "Web" "$GITHUB_WORKSPACE/assets/godot/index.html"
+          ls -la assets/godot
+          test -f assets/godot/index.wasm
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build the Jekyll site
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+
+      - name: Upload preview artifact
+        if: github.ref_name != github.event.repository.default_branch
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-preview
+          path: _site
+
+  deploy:
+    if: github.ref_name == github.event.repository.default_branch
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

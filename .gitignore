@@ -2,4 +2,7 @@ _site/
 .jekyll-cache/
 .sass-cache/
 Gemfile.lock
-vendor/
+/vendor/
+
+# Godot web export, built by CI
+/assets/godot/

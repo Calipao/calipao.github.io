@@ -145,7 +145,7 @@ function createDesk(data) {
   let running = false;
   let hintHidden = false;
   if (matchMedia("(pointer: coarse)").matches) {
-    hint.textContent = "Drag to look around · Tap the monitor for the terminal · Tap a cartridge to open a project";
+    hint.textContent = "Drag to look around · Tap the monitor for the terminal · Tap a cartridge to load a project";
   }
 
   function tweenCamera(toPos, toTarget, ms, done) {
@@ -202,6 +202,7 @@ function createDesk(data) {
     mode = "tween";
     termUI.hidden = true;
     termInput.blur();
+    selectCartridge(0);
     home.position.copy(homePosition());
     tweenCamera(home.position, home.target, 900, () => {
       mode = "orbit";
@@ -252,6 +253,11 @@ function createDesk(data) {
         const p = document.createElement("span");
         p.textContent = u.detail;
         tooltip.appendChild(p);
+      }
+      if (u.action) {
+        const a = document.createElement("em");
+        a.textContent = u.action;
+        tooltip.appendChild(a);
       }
       tooltip.hidden = false;
       const x = Math.min(clientX + 16, window.innerWidth - tooltip.offsetWidth - 8);
@@ -308,7 +314,8 @@ function createDesk(data) {
     if (mode === "focus") {
       if (p && p.object === world.monitor) {
         const link = screenLinkAt(p.hit);
-        if (link) navigate(link);
+        if (link && link.startsWith("cmd:")) runCommand(link.slice(4));
+        else if (link) navigate(link);
         else termInput.focus({ preventScroll: true });
       } else {
         exitTerminal();
@@ -319,13 +326,26 @@ function createDesk(data) {
     if (!p) return;
     const u = p.object.userData;
     if (u.kind === "monitor") enterTerminal();
-    else if (u.kind === "command") {
+    else if (u.command) {
       enterTerminal();
-      term.flushQueue();
-      term.lines.push({ text: "lin@desk:~$ " + u.command, color: "#f2f2f2" });
-      term.run(u.command);
+      runCommand(u.command);
     } else if (u.href) navigate(u.href);
   });
+
+  // Run a terminal command as if typed. `show <n>` also raises that cartridge.
+  function runCommand(command) {
+    term.runVisible(command);
+    termInput.value = "";
+    world.pressKey(true);
+    const m = /^show\s+(\d+)$/.exec(command);
+    selectCartridge(m ? Number(m[1]) : 0);
+  }
+
+  function selectCartridge(n) {
+    for (const obj of world.interactive) {
+      if (obj.userData.kind === "project") obj.userData.selected = obj.userData.command === `show ${n}`;
+    }
+  }
 
   canvas.addEventListener("wheel", (e) => {
     if (mode !== "focus") return;
@@ -342,12 +362,16 @@ function createDesk(data) {
 
   termInput.addEventListener("keydown", (e) => {
     switch (e.key) {
-      case "Enter":
+      case "Enter": {
         e.preventDefault();
+        const typed = term.input.trim();
         term.submit();
+        const m = /^show\s+(\d+)$/i.exec(typed);
+        if (m) selectCartridge(Number(m[1]));
         termInput.value = "";
         world.pressKey(true);
         break;
+      }
       case "ArrowUp":
         e.preventDefault();
         termInput.value = term.historyStep(-1);
@@ -396,10 +420,7 @@ function createDesk(data) {
     if (b.id === "desk-term-exit") return exitTerminal();
     const cmd = b.getAttribute("data-cmd");
     if (cmd) {
-      term.setInput(cmd);
-      term.submit();
-      termInput.value = "";
-      world.pressKey(true);
+      runCommand(cmd);
       termInput.focus({ preventScroll: true });
     }
   });
@@ -426,7 +447,7 @@ function createDesk(data) {
     for (const obj of world.interactive) {
       const u = obj.userData;
       if (u.baseY === undefined) continue;
-      const target = u.baseY + (u.lift || 0);
+      const target = u.baseY + Math.max(u.lift || 0, u.selected ? 0.03 : 0);
       obj.position.y += (target - obj.position.y) * 0.2;
     }
     if (tween) tween(now);

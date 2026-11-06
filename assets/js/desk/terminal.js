@@ -146,7 +146,8 @@ export class Terminal {
       whoami: { hidden: true, run: () => this.about() },
       projects: { about: "list projects", run: () => this.projects() },
       ls: { hidden: true, run: () => this.projects() },
-      open: { about: "open a project, e.g. open 1", run: (arg) => this.open(arg) },
+      show: { about: "show a project, e.g. show 1", run: (arg) => this.show(arg) },
+      open: { about: "open a project's page, e.g. open 1", run: (arg) => this.open(arg) },
       experience: { about: "work history", run: () => this.experience() },
       education: { about: "where I studied", run: () => this.education() },
       skills: { about: "what I work with", run: () => this.skills() },
@@ -220,20 +221,57 @@ export class Terminal {
   projects() {
     const list = this.data.projects || [];
     if (!list.length) return this.print("No projects yet.", COLORS.dim);
-    this.print("Projects (click one, or type `open <number>`):", COLORS.green);
+    this.print("Projects (click one, or type `show <number>`):", COLORS.green);
     list.forEach((p, i) => {
-      this.print(`  [${i + 1}] ${p.title}`, COLORS.link, p.url);
+      this.print(`  [${i + 1}] ${p.title}`, COLORS.link, `cmd:show ${i + 1}`);
       if (p.summary) this.print(`      ${p.summary}`, COLORS.dim);
     });
   }
 
-  open(arg) {
+  // Finds a project by number ("2") or by part of its title. Returns [project, number].
+  findProject(arg) {
     const list = this.data.projects || [];
     const n = parseInt(arg, 10);
-    let proj = Number.isFinite(n) ? list[n - 1] : null;
-    if (!proj && arg) proj = list.find((p) => p.title.toLowerCase().includes(arg.toLowerCase()));
+    if (Number.isFinite(n) && list[n - 1]) return [list[n - 1], n];
+    if (!arg) return [null, 0];
+    const i = list.findIndex((p) => p.title.toLowerCase().includes(arg.toLowerCase()));
+    return i >= 0 ? [list[i], i + 1] : [null, 0];
+  }
+
+  show(arg) {
+    const [proj, n] = this.findProject(arg);
+    if (!proj) return this.print("Usage: show <number>. Type `projects` to list them.", COLORS.error);
+    this.print(`== [${String(n).padStart(2, "0")}] ${proj.title} ==`, COLORS.green);
+    if (proj.summary) this.print(proj.summary, COLORS.white);
+    if (proj.overview && proj.overview !== proj.summary) {
+      this.print("");
+      this.print(proj.overview);
+    }
+    if (proj.tags && proj.tags.length) {
+      this.print("");
+      this.print(`tech: ${proj.tags.join(" · ")}`, COLORS.dim);
+    }
+    this.print("");
+    this.print("> read the full project page", COLORS.link, proj.url);
+    if (proj.repo) this.print("> view the code", COLORS.link, proj.repo);
+    if (proj.demo) this.print("> try the live demo", COLORS.link, proj.demo);
+    this.print(`Click a line above, or type \`open ${n}\`.`, COLORS.dim);
+  }
+
+  open(arg) {
+    const [proj] = this.findProject(arg);
     if (!proj) return this.print("Usage: open <number>. Type `projects` to list them.", COLORS.error);
     this.go(proj.url, proj.title);
+  }
+
+  // Runs a command as if it had been typed, echoing it after the prompt.
+  runVisible(command) {
+    this.flushQueue();
+    this.lines.push({ text: PROMPT + command, color: COLORS.white });
+    this.input = "";
+    this.scroll = 0;
+    this.run(command);
+    this.dirty = true;
   }
 
   experience() {

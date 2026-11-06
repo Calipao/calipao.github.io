@@ -93,6 +93,148 @@ function moonTexture() {
   });
 }
 
+// ---------- flickering windows ----------
+//
+// A single instanced mesh of small panels laid exactly over real windows on
+// the street-facing facades. Each panel is lit or dark and now and then
+// flickers, switches, or (for a few) glows like a TV. Only these panels
+// change, so the shared facade textures stay untouched.
+
+const LIT_WARM = new THREE.Color("#f3c96b");
+const LIT_COOL = new THREE.Color("#a9d4ff");
+const UNLIT = new THREE.Color("#141926");
+const TV = new THREE.Color("#7fa6ff");
+
+function flickeringWindows(city, fronts, r) {
+  const near = fronts.filter((f) => f.distance <= 150 && f.w > 4 && f.h > 6);
+  const count = near.length ? 160 : 0;
+  const mesh = new THREE.InstancedMesh(
+    new THREE.PlaneGeometry(1, 1),
+    new THREE.MeshBasicMaterial({ fog: false }),
+    count
+  );
+  const dummy = new THREE.Object3D();
+  const panels = [];
+
+  // Most panels go where they can be seen: inside the view through the
+  // window from the default camera (widened a little for orbiting).
+  const eye = new THREE.Vector3(0, 1.4, 1.75);
+  function inView(x, y, z) {
+    const t = (eye.z - z) / (eye.z + 0.7); // distance scale from eye to window plane
+    return x > eye.x + (0.45 - 0.35) * t && x < eye.x + (1.45 + 0.35) * t &&
+      y > eye.y + (1.04 - eye.y) * t && y < eye.y + (1.8 - eye.y) * t;
+  }
+
+  for (let i = 0; i < count; i++) {
+    const wantVisible = i < count * 0.8;
+    let f = null;
+    let pos = null;
+    for (let attempt = 0; attempt < 40 && !pos; attempt++) {
+      f = near[Math.floor(r() * near.length)];
+      pos = pickCell(f);
+      if (pos && wantVisible && !inView(pos.x, pos.y, f.z)) pos = null;
+    }
+    if (!pos) { panels.push(null); continue; }
+    dummy.position.set(pos.x, pos.y, f.z + 0.08);
+    dummy.scale.set(WINDOW_W * 0.64 * 1.08, WINDOW_H * 0.55 * 1.08, 1);
+    dummy.updateMatrix();
+    mesh.setMatrixAt(i, dummy.matrix);
+    addPanel(f);
+  }
+
+  // Picks a window cell on a facade in its tile space and converts it back to
+  // a position on the face. Texture cells: 8 columns x 16 rows per tile; the
+  // lit rectangle of a cell spans 18-82% across and 25-80% up.
+  function pickCell(f) {
+    // Pick a window cell in the face's tile space and convert it back to a
+    // position on the face. Texture cells: 8 columns x 16 rows per tile;
+    // the lit rectangle of a cell spans 18-82% across and 25-80% up.
+    const colMin = Math.ceil(f.ox * FACADE_COLS);
+    const colMax = Math.floor((f.ox + f.rx) * FACADE_COLS) - 1;
+    const rowMin = Math.ceil(f.oy * FACADE_ROWS);
+    const rowMax = Math.floor((f.oy + f.ry) * FACADE_ROWS) - 1;
+    if (colMax < colMin || rowMax < rowMin + 1) return null;
+    const col = colMin + Math.floor(r() * (colMax - colMin + 1));
+    const row = rowMin + 1 + Math.floor(r() * (rowMax - rowMin)); // skip the street-level row
+    const u = ((col + 0.5) / FACADE_COLS - f.ox) / f.rx;
+    const v = ((row + 0.525) / FACADE_ROWS - f.oy) / f.ry;
+    return { x: f.x0 + u * f.w, y: f.y0 + v * f.h };
+  }
+
+  // Kinds: most lights change rarely (a flicker or a switch every 45-150 s),
+  // a few faulty ones flicker every 6-25 s, and a few windows glow like a TV.
+  function addPanel(f) {
+    const roll = r();
+    const kind = roll < 0.07 ? "tv" : roll < 0.12 ? "faulty" : "light";
+    const lit = (r() < 0.85 ? LIT_WARM : LIT_COOL).clone().multiply(f.tint);
+    panels.push({
+      kind,
+      lit,
+      dark: UNLIT.clone().multiply(f.tint),
+      tv: TV.clone().multiply(f.tint),
+      on: kind === "faulty" || r() < 0.6,
+      next: interval(kind) * r(), // ms until its first event
+      until: 0, // end of the current flicker burst
+      settleTo: null, // state to switch to after a burst
+      phase: r() * 1000,
+      shown: null,
+    });
+  }
+
+  function interval(kind) {
+    return kind === "faulty" ? 6000 + r() * 19000 : 45000 + r() * 105000;
+  }
+  // Hide unused slots.
+  dummy.scale.set(0, 0, 0);
+  dummy.updateMatrix();
+  panels.forEach((p, i) => { if (!p) mesh.setMatrixAt(i, dummy.matrix); });
+  mesh.instanceMatrix.needsUpdate = true;
+  for (let i = 0; i < count; i++) mesh.setColorAt(i, UNLIT);
+  city.add(mesh);
+
+  const tmp = new THREE.Color();
+  let started = null;
+  return (now) => {
+    if (started === null) started = now;
+    const t = now - started;
+    let changed = false;
+    panels.forEach((p, i) => {
+      if (!p) return;
+      if (t >= p.next) {
+        if (p.kind !== "tv") {
+          // A short stutter; for ordinary lights, half the time it ends with
+          // the light switched on or off.
+          p.until = t + 250 + r() * 900;
+          p.settleTo = p.kind === "light" && r() < 0.5 ? !p.on : null;
+        }
+        p.next = t + interval(p.kind);
+      }
+      let key;
+      if (p.kind === "tv") {
+        // Uneven bluish pulsing, like a screen in a dark room.
+        const k = 0.45 + 0.35 * Math.sin((t + p.phase) / 170) * Math.sin((t + p.phase) / 410) + 0.2 * Math.sin((t + p.phase) / 53);
+        tmp.copy(p.dark).lerp(p.tv, Math.max(0, Math.min(1, k)));
+        mesh.setColorAt(i, tmp);
+        changed = true;
+        return;
+      }
+      if (t < p.until) {
+        key = Math.floor((t + p.phase) / 70) % 3 === 0 ? !p.on : p.on; // stutter
+        if (Math.sin((t + p.phase) * 0.9) > 0.6) key = !key;
+      } else {
+        if (p.settleTo !== null) { p.on = p.settleTo; p.settleTo = null; }
+        key = p.on;
+      }
+      if (key !== p.shown) {
+        p.shown = key;
+        mesh.setColorAt(i, key ? p.lit : p.dark);
+        changed = true;
+      }
+    });
+    if (changed) mesh.instanceColor.needsUpdate = true;
+  };
+}
+
 export function buildCity(scene) {
   const city = new THREE.Group();
   city.name = "city";
@@ -149,7 +291,8 @@ export function buildCity(scene) {
 
   // Adds a box: walls go to the facade batch with tiled window UVs, the
   // top and bottom go to the dark batch.
-  function addBox(texIndex, w, h, d, x, y, z, tint) {
+  const fronts = []; // street-facing (+z) facades, for the flickering windows
+  function addBox(texIndex, w, h, d, x, y, z, tint, distance) {
     const g = new THREE.BoxGeometry(w, h, d).toNonIndexed();
     g.applyMatrix4(move.makeTranslation(x, y, z));
     const p = g.attributes.position.array;
@@ -163,6 +306,7 @@ export function buildCity(scene) {
       const rx = (f < 2 ? d : w) / (FACADE_COLS * WINDOW_W);
       const ox = Math.floor(r() * FACADE_COLS) / FACADE_COLS;
       const oy = Math.floor(r() * FACADE_ROWS) / FACADE_ROWS;
+      if (f === 4) fronts.push({ x0: x - w / 2, y0: y - h / 2, w, h, z: z + d / 2, rx, ry, ox, oy, tint, distance });
       for (let v = f * 6; v < f * 6 + 6; v++) {
         batch.pos.push(p[v * 3], p[v * 3 + 1], p[v * 3 + 2]);
         batch.uv.push(u[v * 2] * rx + ox, u[v * 2 + 1] * ry + oy);
@@ -177,7 +321,7 @@ export function buildCity(scene) {
     const k = THREE.MathUtils.smoothstep(distance, 40, 225);
     const tint = new THREE.Color(1 - k * 0.55, 1 - k * 0.5, 1 - k * 0.38);
     const tex = Math.floor(r() * facades.length);
-    addBox(tex, w, h, d, x, STREET_Y + h / 2, z, tint);
+    addBox(tex, w, h, d, x, STREET_Y + h / 2, z, tint, distance);
 
     let roofY = topY;
     const roll = r();
@@ -186,7 +330,7 @@ export function buildCity(scene) {
       const sw = w * (0.5 + r() * 0.2);
       const sd = d * (0.5 + r() * 0.2);
       const sh = 8 + r() * 14;
-      addBox(tex, sw, sh, sd, x + (r() - 0.5) * (w - sw), topY + sh / 2, z, tint);
+      addBox(tex, sw, sh, sd, x + (r() - 0.5) * (w - sw), topY + sh / 2, z, tint, distance);
       roofY = topY + sh;
     } else if (roll < 0.55) {
       // Water tank on legs.
@@ -262,6 +406,7 @@ export function buildCity(scene) {
     city.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map, vertexColors: true, fog: false })));
   }
   batches.forEach((batch, i) => finish(batch, facades[i]));
+  animated.push(flickeringWindows(city, fronts, r));
   finish(dark, null);
 
   scene.add(city);

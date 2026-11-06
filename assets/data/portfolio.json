@@ -1,0 +1,40 @@
+---
+layout: null
+sitemap: false
+---
+{%- assign p = site.data.profile -%}
+{%- assign projects = site.projects | sort: "order" -%}
+{
+  "name": {{ p.name | jsonify }},
+  "role": {{ p.role | jsonify }},
+  "tagline": {{ p.tagline | jsonify }},
+  "availability": {{ p.availability | jsonify }},
+  "links": {
+    "email": {{ p.email | jsonify }},
+    "github": {{ p.github | jsonify }},
+    "linkedin": {{ p.linkedin | jsonify }},
+    "website": {{ p.website | jsonify }},
+    "resume": {% if p.resume and p.resume != "" %}{{ p.resume | relative_url | jsonify }}{% else %}null{% endif %}
+  },
+  "pages": {
+    "home": {{ '/' | relative_url | jsonify }},
+    "about": {{ '/about/' | relative_url | jsonify }},
+    "projects": {{ '/projects/' | relative_url | jsonify }}
+  },
+  "skills": {{ p.skills | jsonify }},
+  "experience": {{ site.data.experience | jsonify }},
+  "education": {{ site.data.education | jsonify }},
+  "projects": [
+    {%- for proj in projects %}
+    {
+      "title": {{ proj.title | jsonify }},
+      "summary": {{ proj.summary | jsonify }},
+      "tags": {{ proj.tags | jsonify }},
+      "url": {{ proj.url | relative_url | jsonify }},
+      "repo": {{ proj.repo | jsonify }},
+      "demo": {{ proj.demo | jsonify }},
+      "featured": {{ proj.featured | default: false | jsonify }}
+    }{% unless forloop.last %},{% endunless %}
+    {%- endfor %}
+  ]
+}

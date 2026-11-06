@@ -1,0 +1,48 @@
+# Shown on the About page and in the 3D terminal (`experience` command).
+- role: Programmer
+  org: KOEI TECMO Singapore
+  start: April 2025
+  end: Present
+  location: Singapore
+  points: []   # Add 2–3 points on what you work on.
+
+- role: Intern Programmer
+  org: KOEI TECMO Singapore
+  start: September 2024
+  end: April 2025
+  location: Singapore
+  points: []
+
+- role: Technical Director
+  org: Gearbyte Games
+  start: May 2024
+  end: Present
+  location: Singapore
+  points: []   # Add 2–3 points on your responsibilities and the studio's games.
+
+- role: Teaching Assistant
+  org: DigiPen Institute of Technology Singapore
+  start: September 2022
+  end: April 2023
+  location: Singapore
+  points:
+    - Provided guidance and support on a variety of programming concepts and assignments.
+    - Graded assignments and gave feedback to students.
+
+- role: Software Developer
+  org: Echol
+  start: March 2019
+  end: July 2019
+  location: Singapore
+  points:
+    - Contributed to the development of proprietary business support software.
+    - Deployed software for internal use.
+
+- role: Web Developer
+  org: Spot Works
+  start: September 2018
+  end: November 2018
+  location: Singapore
+  points:
+    - Developed and maintained the company's websites.
+    - Worked on a team to refurbish old webpages.

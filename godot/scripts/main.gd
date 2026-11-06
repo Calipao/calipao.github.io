@@ -266,17 +266,30 @@ func _build_small_props() -> void:
 		var leaf := Props.cylinder(plant, 0.0, 0.025, rng.randf_range(0.2, 0.28), leaf_mat, Vector3(cos(a) * 0.03, 0.2, sin(a) * 0.03), Vector3(sin(a) * tilt, 0, -cos(a) * tilt), 4)
 		leaf.scale = Vector3(1, 1, 0.35)
 
-	# Desk lamp.
+	# Desk lamp, built from points so the arm joints meet and the shade, bulb
+	# and spotlight all aim at the same spot on the desk.
+	var lamp_pos := Vector3(0.7, DESK_Y, -0.22)
+	var aim_at := Vector3(0.3, DESK_Y, 0.12)
+	var elbow := Vector3(0, 0.4, -0.04)
+	var head_pos := Vector3(-0.22, 0.47, 0.02)
+	var aim_dir := (aim_at - lamp_pos - head_pos).normalized()
 	var lamp := Node3D.new()
-	lamp.position = Vector3(0.7, DESK_Y, -0.22)
+	lamp.position = lamp_pos
 	add_child(lamp)
 	var lamp_mat := Props.mat(Color("#2f3b35"), 0.35, 0.5)
 	Props.cylinder(lamp, 0.07, 0.08, 0.02, lamp_mat, Vector3(0, 0.01, 0))
-	Props.cylinder(lamp, 0.008, 0.008, 0.4, lamp_mat, Vector3(0, 0.21, 0))
-	Props.sphere(lamp, 0.016, lamp_mat, Vector3(0, 0.41, 0))
-	Props.cylinder(lamp, 0.008, 0.008, 0.26, lamp_mat, Vector3(-0.11, 0.44, 0), Vector3(0, 0, PI / 2.6))
-	Props.cylinder(lamp, 0.02, 0.06, 0.09, lamp_mat, Vector3(-0.23, 0.44, 0), Vector3(0, 0, 0.5))
-	Props.sphere(lamp, 0.02, Props.unshaded(Color("#fff3c4")), Vector3(-0.235, 0.41, 0))
+	for segment: Array in [[Vector3(0, 0.02, 0), elbow], [elbow, head_pos]]:
+		var from: Vector3 = segment[0]
+		var to: Vector3 = segment[1]
+		var rod := Props.cylinder(lamp, 0.008, 0.008, from.distance_to(to), lamp_mat, (from + to) / 2.0, Vector3.ZERO, 8)
+		rod.basis = Basis(Quaternion(Vector3.UP, (to - from).normalized()))
+	Props.sphere(lamp, 0.014, lamp_mat, elbow)
+	Props.sphere(lamp, 0.014, lamp_mat, head_pos)
+	# Shade: narrow end at the arm, wide end facing the aim point.
+	var shade := Props.cylinder(lamp, 0.02, 0.06, 0.09, lamp_mat, head_pos + aim_dir * 0.045)
+	shade.basis = Basis(Quaternion(Vector3.UP, -aim_dir))
+	var bulb_pos := head_pos + aim_dir * 0.07
+	Props.sphere(lamp, 0.02, Props.unshaded(Color("#fff3c4")), bulb_pos)
 	var spot := SpotLight3D.new()
 	spot.light_color = Color("#ffd9a0")
 	spot.light_energy = 3.0
@@ -284,8 +297,7 @@ func _build_small_props() -> void:
 	spot.spot_angle = 42.0
 	spot.spot_attenuation = 1.0
 	spot.shadow_enabled = true
-	var spot_pos := Vector3(0.7 - 0.235, DESK_Y + 0.4, -0.22)
-	spot.transform = Transform3D(Basis(), spot_pos).looking_at(Vector3(0.25, DESK_Y, 0.05), Vector3.UP)
+	spot.transform = Transform3D(Basis(), lamp_pos + bulb_pos).looking_at(aim_at, Vector3.UP)
 	add_child(spot)
 
 

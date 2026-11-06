@@ -78,7 +78,7 @@ function createDesk(data) {
   scene.background = new THREE.Color("#0c0f0e");
   scene.fog = new THREE.Fog("#0c0f0e", 3.5, 8);
 
-  const camera = new THREE.PerspectiveCamera(40, 1, 0.02, 30);
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 340);
 
   // Lights: dim room, warm desk lamp (in props), green screen glow, cool moonlight.
   scene.add(new THREE.HemisphereLight("#7d93b8", "#1a1410", 0.55));

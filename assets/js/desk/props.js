@@ -1,6 +1,7 @@
 // Builds the desk scene from simple low-poly shapes, so the page needs no model files.
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { buildCity } from "./city.js";
 
 const DESK_Y = 0.75; // height of the desk surface
 
@@ -15,7 +16,7 @@ function mesh(geometry, material, { cast = true, receive = true } = {}) {
   return m;
 }
 
-// Seeded random so the skyline looks the same on every visit.
+// Seeded random so procedural details look the same on every visit.
 function rng(seed) {
   return () => {
     seed = (seed * 16807) % 2147483647;
@@ -65,58 +66,68 @@ export function buildDesk(scene, { data, screenTexture }) {
   const animated = [];
 
   // ---------- room ----------
-  const floor = mesh(new THREE.PlaneGeometry(12, 12), mat("#15181a", { roughness: 0.95 }), { cast: false });
+  // Wide enough to reach the ends of the wall, and stopping at the wall so it
+  // never shows through the window.
+  const floor = mesh(new THREE.PlaneGeometry(60, 30), mat("#15181a", { roughness: 0.95 }), { cast: false });
   floor.rotation.x = -Math.PI / 2;
+  floor.position.z = -0.62 + 15;
   scene.add(floor);
 
-  const wall = mesh(new THREE.PlaneGeometry(12, 5), mat("#1f2a26", { roughness: 0.95 }), { cast: false });
-  wall.position.set(0, 2.5, -0.62);
-  scene.add(wall);
+  // Back wall with a real opening for the window. The wall has thickness,
+  // so the opening shows its sides and the city sits properly behind it.
+  const wallMat = mat("#1f2a26", { roughness: 0.95 });
+  const WALL_Z = -0.62;   // room-side face of the wall
+  const WALL_T = 0.16;    // thickness
+  const win = { x0: 0.45, x1: 1.45, y0: 1.04, y1: 1.8 };
+  const winW = win.x1 - win.x0;
+  const winH = win.y1 - win.y0;
+  const winX = (win.x0 + win.x1) / 2;
+  const winY = (win.y0 + win.y1) / 2;
+  const wallZ = WALL_Z - WALL_T / 2;
+  // Wide and tall enough that the city is only ever seen through the window.
+  const WALL_HALF = 30;
+  const WALL_H = 14;
+  for (const [w, h, x, y] of [
+    [win.x0 + WALL_HALF, WALL_H, (win.x0 - WALL_HALF) / 2, WALL_H / 2],  // left of the window
+    [WALL_HALF - win.x1, WALL_H, (win.x1 + WALL_HALF) / 2, WALL_H / 2],  // right
+    [winW, win.y0, winX, win.y0 / 2],                                    // below
+    [winW, WALL_H - win.y1, winX, (win.y1 + WALL_H) / 2],                // above
+  ]) {
+    const piece = mesh(new THREE.BoxGeometry(w, h, WALL_T), wallMat, { cast: false });
+    piece.position.set(x, y, wallZ);
+    scene.add(piece);
+  }
 
-  // Window with a night skyline.
-  const skyline = canvasTexture(512, 400, (g, w, h) => {
-    const sky = g.createLinearGradient(0, 0, 0, h);
-    sky.addColorStop(0, "#050816");
-    sky.addColorStop(1, "#1b2440");
-    g.fillStyle = sky;
-    g.fillRect(0, 0, w, h);
-    g.fillStyle = "#e9edd8";
-    g.beginPath();
-    g.arc(w * 0.78, h * 0.2, 22, 0, Math.PI * 2);
-    g.fill();
-    const r = rng(42);
-    for (let i = 0; i < 60; i++) {
-      g.fillStyle = `rgba(255,255,255,${0.3 + r() * 0.6})`;
-      g.fillRect(r() * w, r() * h * 0.5, 1.5, 1.5);
-    }
-    let x = 0;
-    while (x < w) {
-      const bw = 30 + r() * 50;
-      const bh = h * (0.25 + r() * 0.5);
-      g.fillStyle = r() > 0.5 ? "#0b0f1a" : "#10162a";
-      g.fillRect(x, h - bh, bw, bh);
-      for (let wy = h - bh + 8; wy < h - 6; wy += 12) {
-        for (let wx = x + 5; wx < x + bw - 6; wx += 9) {
-          if (r() > 0.68) {
-            g.fillStyle = r() > 0.2 ? "#f5d27a" : "#9fd3ff";
-            g.fillRect(wx, wy, 4, 6);
-          }
-        }
-      }
-      x += bw + 2;
-    }
-  });
-  const windowGroup = new THREE.Group();
-  const glass = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.7), new THREE.MeshBasicMaterial({ map: skyline, toneMapped: false }));
-  windowGroup.add(glass);
+  // Window frame, set halfway into the wall, with a cross of glazing bars.
   const frameMat = mat("#2d2a26");
-  for (const [w, h, x, y] of [[0.98, 0.04, 0, 0.37], [0.98, 0.04, 0, -0.37], [0.04, 0.78, -0.47, 0], [0.04, 0.78, 0.47, 0], [0.02, 0.7, 0, 0], [0.9, 0.02, 0, 0]]) {
-    const bar = mesh(new THREE.BoxGeometry(w, h, 0.04), frameMat);
-    bar.position.set(x, y, 0.02);
+  const windowGroup = new THREE.Group();
+  windowGroup.position.set(winX, winY, wallZ);
+  const fw = 0.05;
+  for (const [w, h, x, y] of [
+    [winW, fw, 0, winH / 2 - fw / 2], [winW, fw, 0, -winH / 2 + fw / 2],
+    [fw, winH, -winW / 2 + fw / 2, 0], [fw, winH, winW / 2 - fw / 2, 0],
+    [0.025, winH, 0, 0], [winW, 0.025, 0, 0.06],
+  ]) {
+    const bar = mesh(new THREE.BoxGeometry(w, h, 0.05), frameMat);
+    bar.position.set(x, y, 0);
     windowGroup.add(bar);
   }
-  windowGroup.position.set(0.95, 1.55, -0.6);
+  // Faint glass so the window reads as glazed without hiding the view.
+  const glass = new THREE.Mesh(
+    new THREE.PlaneGeometry(winW, winH),
+    new THREE.MeshBasicMaterial({ color: "#9fb7ff", transparent: true, opacity: 0.05, depthWrite: false })
+  );
+  glass.position.z = -0.01;
+  windowGroup.add(glass);
   scene.add(windowGroup);
+
+  // Sill on the room side.
+  const sill = mesh(new THREE.BoxGeometry(winW + 0.12, 0.03, 0.12), mat("#3a3632", { roughness: 0.7 }));
+  sill.position.set(winX, win.y0 - 0.015, WALL_Z + 0.04);
+  scene.add(sill);
+
+  const city = buildCity(scene);
+  animated.push(...city.animated);
 
   // Poster.
   const posterTex = canvasTexture(300, 400, (g, w, h) => {

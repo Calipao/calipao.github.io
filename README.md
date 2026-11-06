@@ -40,6 +40,7 @@ The home page is an interactive 3D desk built with [three.js](https://threejs.or
 |------|-------|
 | Page layout and overlay | `_layouts/desk.html` |
 | Scene objects | `assets/js/desk/props.js` |
+| City outside the window | `assets/js/desk/city.js` |
 | Camera, picking, view switching | `assets/js/desk/main.js` |
 | Terminal commands | `assets/js/desk/terminal.js` |
 | Experience and education | `_data/experience.yml`, `_data/education.yml` |

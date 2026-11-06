@@ -191,6 +191,7 @@ func _build_monitor() -> void:
 	term.navigate_requested.connect(_navigate)
 	term.exit_requested.connect(exit_terminal)
 	term.text_view_requested.connect(_text_view)
+	term.project_shown.connect(_select_cartridge)
 
 	var screen_mat := StandardMaterial3D.new()
 	screen_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -310,10 +311,12 @@ func _build_cartridges() -> void:
 		Props.label(cart, "%02d" % (i + 1), font, Color("#f2efe4"), Vector3(0, 0.012, 0.0085), 0.00012, 64)
 		var area := Props.pick_area(cart, Vector3(0.065, 0.09, 0.03), Vector3(0, 0.045, 0))
 		picks[area] = {
-			"kind": "link",
+			"kind": "command",
+			"command": "show %d" % (i + 1),
+			"number": i + 1,
 			"label": str(project.get("title", "")),
 			"detail": str(project.get("summary", "")),
-			"href": str(project.get("url", "")),
+			"action": "Click to load it in the terminal.",
 			"node": cart,
 			"base_y": cart.position.y,
 			"materials": [shell, sticker],
@@ -437,8 +440,8 @@ func _build_ui() -> void:
 
 	hint = Label.new()
 	var touch := DisplayServer.is_touchscreen_available()
-	hint.text = ("Drag to look around · Tap the monitor for the terminal · Tap a cartridge to open a project" if touch
-		else "Drag to look around · Click the monitor to use the terminal · Click a cartridge to open a project")
+	hint.text = ("Drag to look around · Tap the monitor for the terminal · Tap a cartridge to load a project" if touch
+		else "Drag to look around · Click the monitor to use the terminal · Click a cartridge to load a project")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_color_override("font_color", Color("#cccccc"))
@@ -553,6 +556,7 @@ func exit_terminal() -> void:
 	mode = Mode.TWEEN
 	term_bar.visible = false
 	line_edit.release_focus()
+	_select_cartridge(0)
 	yaw = want_yaw
 	pitch = want_pitch
 	dist = want_dist
@@ -620,6 +624,8 @@ func _hover(screen_pos: Vector2) -> void:
 		var info: Dictionary = picks[hovered]
 		tooltip_title.text = str(info.get("label", ""))
 		tooltip_detail.text = str(info.get("detail", ""))
+		if str(info.get("action", "")) != "":
+			tooltip_detail.text = (tooltip_detail.text + "\n\n" + str(info.get("action", ""))).strip_edges()
 		tooltip_detail.visible = tooltip_detail.text != ""
 		tooltip.visible = true
 		tooltip.reset_size()
@@ -644,6 +650,13 @@ func _set_hover(area: Area3D) -> void:
 		tooltip.visible = false
 
 
+## Raise the cartridge for project `number` (0 lowers them all).
+func _select_cartridge(number: int) -> void:
+	for info: Dictionary in picks.values():
+		if info.has("number"):
+			info["selected"] = int(info["number"]) == number
+
+
 func _highlight(info: Dictionary, on: bool) -> void:
 	for m: StandardMaterial3D in info.get("materials", []):
 		m.emission_enabled = on
@@ -659,7 +672,9 @@ func _click(screen_pos: Vector2) -> void:
 	if mode == Mode.FOCUS:
 		if area == monitor_area:
 			var link := _screen_link(hit.get("position", Vector3.ZERO))
-			if link != "":
+			if link.begins_with("cmd:"):
+				term.run_visible(link.substr(4))
+			elif link != "":
 				_navigate(link)
 			else:
 				line_edit.grab_focus()
@@ -744,7 +759,8 @@ func _process(delta: float) -> void:
 		var node: Node3D = info.get("node") as Node3D
 		if node == null:
 			continue
-		var target := float(info.get("base_y", 0.0)) + float(info.get("lift", 0.0))
+		var lift := maxf(float(info.get("lift", 0.0)), 0.03 if info.get("selected", false) else 0.0)
+		var target := float(info.get("base_y", 0.0)) + lift
 		node.position.y = lerpf(node.position.y, target, 0.2)
 
 	for i: int in pressed.keys():

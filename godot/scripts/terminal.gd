@@ -6,6 +6,7 @@ extends Control
 signal navigate_requested(url: String)
 signal exit_requested
 signal text_view_requested
+signal project_shown(number: int)
 
 const PROMPT := "lin@desk:~$ "
 const C_TEXT := Color("#d6f5b0")
@@ -176,7 +177,8 @@ const HELP := [
 	["help", "list commands"],
 	["about", "who I am"],
 	["projects", "list projects"],
-	["open", "open a project, e.g. open 1"],
+	["show", "show a project, e.g. show 1"],
+	["open", "open a project's page, e.g. open 1"],
 	["experience", "work history"],
 	["education", "where I studied"],
 	["skills", "what I work with"],
@@ -214,6 +216,8 @@ func run(line: String) -> void:
 			_about()
 		"projects", "ls":
 			_projects()
+		"show":
+			_show(arg)
 		"open":
 			_open(arg)
 		"experience":
@@ -303,30 +307,65 @@ func _projects() -> void:
 	if list.is_empty():
 		out("No projects yet.", C_DIM)
 		return
-	out("Projects (click one, or type `open <number>`):", C_GREEN)
+	out("Projects (click one, or type `show <number>`):", C_GREEN)
 	for i in list.size():
 		var p: Dictionary = list[i]
-		out("  [%d] %s" % [i + 1, p.get("title", "")], C_LINK, str(p.get("url", "")))
+		out("  [%d] %s" % [i + 1, p.get("title", "")], C_LINK, "cmd:show %d" % (i + 1))
 		if str(p.get("summary", "")) != "":
 			out("      " + str(p.get("summary", "")), C_DIM)
 
 
-func _open(arg: String) -> void:
+## Project number (1-based) matching a number or part of a title, or 0.
+func _find_project(arg: String) -> int:
 	var list: Array = data.get("projects", [])
-	var project = null
 	if arg.is_valid_int():
 		var n := arg.to_int()
-		if n >= 1 and n <= list.size():
-			project = list[n - 1]
-	elif arg != "":
-		for p in list:
-			if str(p.get("title", "")).to_lower().contains(arg.to_lower()):
-				project = p
-				break
-	if project == null:
+		return n if n >= 1 and n <= list.size() else 0
+	if arg == "":
+		return 0
+	for i in list.size():
+		if str(list[i].get("title", "")).to_lower().contains(arg.to_lower()):
+			return i + 1
+	return 0
+
+
+func _show(arg: String) -> void:
+	var n := _find_project(arg)
+	if n == 0:
+		out("Usage: show <number>. Type `projects` to list them.", C_ERROR)
+		return
+	var p: Dictionary = data.get("projects", [])[n - 1]
+	var summary := str(p.get("summary", ""))
+	var overview := str(p.get("overview", ""))
+	out("== [%02d] %s ==" % [n, p.get("title", "")], C_GREEN)
+	if summary != "":
+		out(summary, C_WHITE)
+	if overview != "" and overview != summary:
+		out("")
+		out(overview)
+	var tags: PackedStringArray = []
+	for t in p.get("tags", []):
+		tags.append(str(t))
+	if not tags.is_empty():
+		out("")
+		out("tech: " + " · ".join(tags), C_DIM)
+	out("")
+	out("> read the full project page", C_LINK, str(p.get("url", "")))
+	if p.get("repo") is String and p.get("repo") != "":
+		out("> view the code", C_LINK, p.get("repo"))
+	if p.get("demo") is String and p.get("demo") != "":
+		out("> try the live demo", C_LINK, p.get("demo"))
+	out("Click a line above, or type `open %d`." % n, C_DIM)
+	project_shown.emit(n)
+
+
+func _open(arg: String) -> void:
+	var n := _find_project(arg)
+	if n == 0:
 		out("Usage: open <number>. Type `projects` to list them.", C_ERROR)
 		return
-	_go(str(project.get("url", "")), str(project.get("title", "")))
+	var p: Dictionary = data.get("projects", [])[n - 1]
+	_go(str(p.get("url", "")), str(p.get("title", "")))
 
 
 func _experience() -> void:

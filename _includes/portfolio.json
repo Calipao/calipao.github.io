@@ -22,9 +22,17 @@
   "education": {{ site.data.education | jsonify }},
   "projects": [
     {%- for proj in projects %}
+    {%- assign overview = "" -%}
+    {%- assign sections = proj.content | split: "<h2" -%}
+    {%- for section in sections -%}
+      {%- if section contains ">Overview</h2>" -%}
+        {%- assign overview = section | split: "</h2>" | last | strip_html | normalize_whitespace | strip -%}
+      {%- endif -%}
+    {%- endfor %}
     {
       "title": {{ proj.title | jsonify }},
       "summary": {{ proj.summary | jsonify }},
+      "overview": {{ overview | jsonify }},
       "tags": {{ proj.tags | jsonify }},
       "url": {{ proj.url | relative_url | jsonify }},
       "repo": {{ proj.repo | jsonify }},

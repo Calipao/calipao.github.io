@@ -120,6 +120,7 @@
         {
             "title": "[Project 1]",
             "summary": "[One or two sentences: what it is and the problem it solves.]",
+            "overview": "[What the project is, who it\u2019s for, and why you built it.]",
             "tags": [
                 "[Tech A]",
                 "[Tech B]"
@@ -132,6 +133,7 @@
         {
             "title": "[Project 2]",
             "summary": "[One or two sentences: what it is and the problem it solves.]",
+            "overview": "[What the project is, who it\u2019s for, and why you built it.]",
             "tags": [
                 "[Tech A]",
                 "[Tech B]"
@@ -144,6 +146,7 @@
         {
             "title": "[Project 3]",
             "summary": "[One or two sentences: what it is and the problem it solves.]",
+            "overview": "[What the project is, who it\u2019s for, and why you built it.]",
             "tags": [
                 "[Tech A]",
                 "[Tech B]"

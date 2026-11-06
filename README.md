@@ -31,8 +31,8 @@ Put the PDF at `assets/resume.pdf` and set `resume: /assets/resume.pdf` in `_dat
 
 The home page is an interactive 3D desk built with [three.js](https://threejs.org) (r187, vendored in `assets/vendor/three/`, no build step).
 
-- Click the monitor, or just start typing, to use the terminal. Try `help`, `projects`, `open 1`, `about`, `experience`, `contact`.
-- Each project in `_projects/` becomes a game cartridge on the desk; the notebook opens the About page; the business card runs `contact`.
+- Click the monitor, or just start typing, to use the terminal. Try `help`, `projects`, `show 1`, `open 1`, `about`, `experience`, `contact`.
+- Each project in `_projects/` becomes a game cartridge on the desk; clicking one loads it in the terminal (`show <n>`: summary, the Overview section of its page, tech tags and links). The notebook opens the About page; the business card runs `contact`.
 - Everything the desk shows comes from `/assets/data/portfolio.json`, which Jekyll builds from `_data/` and `_projects/`, so editing those files updates the desk too.
 - Visitors without WebGL, or who prefer reduced motion, get the plain text home page. Anyone can switch with the "text view" / "enter the 3D desk" links.
 

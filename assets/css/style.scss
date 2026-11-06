@@ -245,6 +245,8 @@ img { max-width: 100%; height: auto; }
 }
 .desk-tooltip[hidden] { display: none; }
 .desk-tooltip strong { display: block; color: $accent; }
+.desk-tooltip span { display: block; }
+.desk-tooltip em { display: block; margin-top: 4px; color: $muted; font-style: normal; font-size: 0.9em; }
 
 .desk-loading {
   position: fixed;

@@ -397,7 +397,8 @@ export function buildDesk(scene, { data, screenTexture }) {
       kind: "project",
       label: proj.title,
       detail: proj.summary,
-      href: proj.url,
+      action: "Click to load it in the terminal.",
+      command: `show ${i + 1}`,
       baseY: cart.position.y,
       materials: [shellMat, faceMat],
     };

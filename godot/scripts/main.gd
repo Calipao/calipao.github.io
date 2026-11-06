@@ -5,6 +5,7 @@ extends Node3D
 const Props = preload("res://scripts/props.gd")
 const Terminal = preload("res://scripts/terminal.gd")
 const TermInput = preload("res://scripts/term_input.gd")
+const City = preload("res://scripts/city.gd")
 
 const DESK_Y := 0.75
 const SCREEN_SIZE := Vector2(0.44, 0.33)
@@ -107,8 +108,8 @@ func _build_environment() -> void:
 
 	camera = Camera3D.new()
 	camera.fov = 40.0
-	camera.near = 0.02
-	camera.far = 30.0
+	camera.near = 0.05
+	camera.far = 340.0
 	add_child(camera)
 	camera.global_transform = _orbit_transform()
 	camera.current = true
@@ -121,26 +122,62 @@ func _build_environment() -> void:
 
 
 func _build_room() -> void:
+	# Wide enough to reach the ends of the wall, and stopping at the wall so it
+	# never shows through the window.
 	var floor_mesh := PlaneMesh.new()
-	floor_mesh.size = Vector2(12, 12)
+	floor_mesh.size = Vector2(60, 30)
 	var floor_node := MeshInstance3D.new()
 	floor_node.mesh = floor_mesh
 	floor_node.material_override = Props.mat(Color("#15181a"), 0.95)
+	floor_node.position = Vector3(0, 0, -0.62 + 15.0)
 	add_child(floor_node)
 
-	Props.quad(self, Vector2(12, 5), Props.mat(Color("#1f2a26"), 0.95), Vector3(0, 2.5, -0.62))
+	# Back wall with a real opening for the window. The wall has thickness, so
+	# the opening shows its sides, and it is wide and tall enough that the
+	# city is only ever seen through the window.
+	var wall_mat := Props.mat(Color("#1f2a26"), 0.95)
+	var wall_t := 0.16
+	var wall_z := -0.62 - wall_t / 2.0
+	var x0 := 0.45
+	var x1 := 1.45
+	var y0 := 1.04
+	var y1 := 1.8
+	var win_w := x1 - x0
+	var win_h := y1 - y0
+	var win_x := (x0 + x1) / 2.0
+	var win_y := (y0 + y1) / 2.0
+	var half := 30.0
+	var wall_h := 14.0
+	for piece: Array in [
+		[x0 + half, wall_h, (x0 - half) / 2.0, wall_h / 2.0],  # left of the window
+		[half - x1, wall_h, (x1 + half) / 2.0, wall_h / 2.0],  # right
+		[win_w, y0, win_x, y0 / 2.0],  # below
+		[win_w, wall_h - y1, win_x, (y1 + wall_h) / 2.0],  # above
+	]:
+		var mi := Props.box(self, Vector3(piece[0], piece[1], wall_t), wall_mat, Vector3(piece[2], piece[3], wall_z))
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
-	# Window with a night skyline.
-	var glass := StandardMaterial3D.new()
-	glass.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	glass.albedo_texture = Props.skyline_texture()
-	var window := Node3D.new()
-	window.position = Vector3(0.95, 1.55, -0.6)
-	add_child(window)
-	Props.quad(window, Vector2(0.9, 0.7), glass, Vector3.ZERO)
+	# Window frame, set halfway into the wall, with a cross of glazing bars.
 	var frame_mat := Props.mat(Color("#2d2a26"))
-	for bar: Array in [[0.98, 0.04, 0.0, 0.37], [0.98, 0.04, 0.0, -0.37], [0.04, 0.78, -0.47, 0.0], [0.04, 0.78, 0.47, 0.0], [0.02, 0.7, 0.0, 0.0], [0.9, 0.02, 0.0, 0.0]]:
-		Props.box(window, Vector3(bar[0], bar[1], 0.04), frame_mat, Vector3(bar[2], bar[3], 0.02))
+	var window := Node3D.new()
+	window.position = Vector3(win_x, win_y, wall_z)
+	add_child(window)
+	var fw := 0.05
+	for bar: Array in [
+		[win_w, fw, 0.0, win_h / 2.0 - fw / 2.0], [win_w, fw, 0.0, -win_h / 2.0 + fw / 2.0],
+		[fw, win_h, -win_w / 2.0 + fw / 2.0, 0.0], [fw, win_h, win_w / 2.0 - fw / 2.0, 0.0],
+		[0.025, win_h, 0.0, 0.0], [win_w, 0.025, 0.0, 0.06],
+	]:
+		Props.box(window, Vector3(bar[0], bar[1], 0.05), frame_mat, Vector3(bar[2], bar[3], 0))
+	# Faint glass so the window reads as glazed without hiding the view.
+	var glass := Props.unshaded(Color(0.62, 0.72, 1.0, 0.05))
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	Props.quad(window, Vector2(win_w, win_h), glass, Vector3(0, 0, -0.01))
+	# Sill on the room side.
+	Props.box(self, Vector3(win_w + 0.12, 0.03, 0.12), Props.mat(Color("#3a3632"), 0.7), Vector3(win_x, y0 - 0.015, -0.62 + 0.04))
+
+	# The night city outside.
+	add_child(City.new())
 
 	# Poster.
 	var poster := Node3D.new()

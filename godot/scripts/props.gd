@@ -102,32 +102,3 @@ static func pick_area(parent: Node3D, size: Vector3, center: Vector3) -> Area3D:
 	area.add_child(shape)
 	parent.add_child(area)
 	return area
-
-
-static func skyline_texture() -> ImageTexture:
-	var w := 256
-	var h := 200
-	var img := Image.create_empty(w, h, false, Image.FORMAT_RGBA8)
-	for y in h:
-		var t := float(y) / h
-		img.fill_rect(Rect2i(0, y, w, 1), Color("#050816").lerp(Color("#1b2440"), t))
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 42
-	for i in 40:
-		img.set_pixel(rng.randi_range(0, w - 1), rng.randi_range(0, h / 2), Color(1, 1, 1, rng.randf_range(0.3, 0.9)))
-	img.fill_rect(Rect2i(190, 24, 18, 18), Color("#e9edd8"))
-	var x := 0
-	while x < w:
-		var bw := rng.randi_range(15, 40)
-		var bh := int(h * rng.randf_range(0.25, 0.75))
-		img.fill_rect(Rect2i(x, h - bh, bw, bh), Color("#0b0f1a") if rng.randf() > 0.5 else Color("#10162a"))
-		var wy := h - bh + 4
-		while wy < h - 3:
-			var wx := x + 3
-			while wx < x + bw - 3:
-				if rng.randf() > 0.68:
-					img.fill_rect(Rect2i(wx, wy, 2, 3), Color("#f5d27a") if rng.randf() > 0.2 else Color("#9fd3ff"))
-				wx += 5
-			wy += 6
-		x += bw + 1
-	return ImageTexture.create_from_image(img)

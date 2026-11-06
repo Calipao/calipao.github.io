@@ -32,6 +32,7 @@ Put the PDF at `assets/resume.pdf` and set `resume: /assets/resume.pdf` in `_dat
 The home page embeds an interactive desk made in **Godot 4.7** (`godot/`): a CRT monitor running a terminal (`help`, `projects`, `show 1`, `open 1`, `about`, `experience`, `contact`), project cartridges that load their details in the terminal, an About notebook and a contact card.
 
 - The Godot project builds the whole scene from code (`godot/scripts/main.gd`); the terminal is `godot/scripts/terminal.gd`.
+- The night city outside the window, including the flickering windows, is `godot/scripts/city.gd`.
 - Content comes from the page itself: `_layouts/desk.html` embeds the same data as `/assets/data/portfolio.json` (`window.DESK_DATA`), which Godot reads through `JavaScriptBridge`. Editing `_data/` and `_projects/` updates the desk.
 - It uses the single-threaded web export, which GitHub Pages can serve without special headers.
 - Visitors without WebGL 2, or who prefer reduced motion, get the plain text home page; anyone can switch views.
